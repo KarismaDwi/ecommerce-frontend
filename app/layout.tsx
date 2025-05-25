@@ -22,27 +22,52 @@ export default function ClientLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
 
-  // Halaman yang TIDAK ada semua layout (Navbar, Header, Footer)
-  const noLayoutPages = ['/checkout', '/register', '/login', '/payment', '/profile', '/dashboard'];
+  const isAdminPage = pathname.startsWith('/admin');
 
-  const shouldHideAllLayout = noLayoutPages.includes(pathname);
-  const shouldHideHeader = pathname === '/cart'; // Hanya hide Header kalau di /cart
+  // Halaman tanpa layout sama sekali (Navbar, Header, Footer)
+  const noLayoutPages = ['/register', '/login'];
+
+  // Halaman tanpa Header (Navbar & Footer tetap)
+  const noHeaderPages = [
+    '/profile',
+    '/collection',
+    '/tanaman',
+    '/dekor',
+    '/aksesoris',
+    '/bouquet',
+    '/custom',
+    '/search',
+    '/checkout',
+    '/payment',
+    '/description',
+    '/cart',
+  ];
+
+  // Halaman yang hanya hide Header & Footer tapi TAMPIL Navbar
+  const hideHeaderFooterPages = ['/checkout', '/payment'];
+
+  const shouldHideAll = noLayoutPages.includes(pathname) || isAdminPage;
+  const shouldHideNavbar = shouldHideAll;
+  const shouldHideHeaderFooter = hideHeaderFooterPages.some((path) =>
+    pathname.startsWith(path)
+  ) || isAdminPage;
+
+  // Cek apakah header harus disembunyikan
+  const shouldHideHeader =
+    noHeaderPages.some((path) => pathname.startsWith(path)) ||
+    noLayoutPages.includes(pathname) ||
+    shouldHideHeaderFooter ||
+    isAdminPage;
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        {/* Navbar selalu tampil kalau bukan halaman no-layout */}
-        {!shouldHideAllLayout && <Navbar />}
-        
-        {/* Header tampil kalau bukan halaman no-layout DAN bukan /cart */}
-        {!shouldHideAllLayout && !shouldHideHeader && <Headers />}
-        
+        {!shouldHideNavbar && <Navbar />}
+        {!shouldHideHeader && <Headers />}
         <main className="flex-grow">{children}</main>
-        
-        {/* Footer selalu tampil kalau bukan halaman no-layout */}
-        {!shouldHideAllLayout && <Footer />}
+        {!shouldHideHeaderFooter && !shouldHideAll && <Footer />}
       </body>
     </html>
   );

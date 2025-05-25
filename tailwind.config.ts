@@ -13,6 +13,7 @@ export default {
         "peach": "#FF9A8A",
         "aduh": "#e6c3ca",
         "nude": "#F2DADF",
+        "tomat": "#E04958",
       },
     },
   },

@@ -1,48 +1,115 @@
-'use client';
-import Image from "next/image";
+"use client";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaStar } from "react-icons/fa";
+import Image from "next/image";
+import { FaStar, FaTag } from "react-icons/fa";
 
-const products = [
-  { id: 1, name: "Rose Bouquet", price: 250000, image: "/buket/buket1.jpeg", link: "/description/rose", rating: 4.5 },
-  { id: 2, name: "Tulip Bouquet", price: 300000, image: "/buket/buket2.jpeg", link: "/description/tulip", rating: 4.2 },
-  { id: 3, name: "Sunflower Bouquet", price: 200000, image: "/buket/buket3.jpeg", link: "/description/sunflower", rating: 4.8 },
-  { id: 4, name: "Orchid Bouquet", price: 400000, image: "/buket/buket4.jpeg", link: "/description/orchid", rating: 4.7 },
-  { id: 5, name: "Lily Bouquet", price: 280000, image: "/buket/buket5.jpeg", link: "/description/lily", rating: 4.3 },
-  { id: 6, name: "Daisy Bouquet", price: 180000, image: "/buket/buket6.jpeg", link: "/description/daisy", rating: 4.1 },
-  { id: 7, name: "Carnation Bouquet", price: 220000, image: "/buket/buket7.jpeg", link: "/description/carnation", rating: 4.4 },
-  { id: 8, name: "Peony Bouquet", price: 350000, image: "/buket/buket8.jpeg", link: "/description/peony", rating: 4.6 },
-];
+interface Product {
+  id_produk: number;
+  name: string;
+  harga: number;
+  gambar: string;
+  kategori: string;
+  rating?: number;
+}
 
-export default function DaftarBouquet() {
+export default function DaftarProduk() {
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBouquetProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `http://localhost:7000/api/search?keyword=buket`
+        );
+        const data = await response.json();
+
+        const bouquetProducts = Array.isArray(data)
+          ? data.filter((product: Product) =>
+              product.kategori?.toLowerCase().includes("buket") ||
+              product.name?.toLowerCase().includes("buket")
+            )
+          : [];
+
+        setProducts(bouquetProducts);
+      } catch (error) {
+        console.error("Error fetching bouquet products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBouquetProducts();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="relative mx-auto p-6 bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 min-h-screen">
+        <h1 className="text-3xl font-extrabold text-center mb-10 text-pink-700 tracking-wide drop-shadow">
+          Bouquet Bunga
+        </h1>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {[...Array(8)].map((_, index) => (
+            <div key={index} className="bg-white/80 p-4 rounded-2xl shadow-xl h-80 animate-pulse">
+              <div className="w-full h-48 bg-pink-100 rounded-xl mb-3"></div>
+              <div className="h-5 bg-pink-100 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-pink-100 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div id="daftar" className="relative mx-auto p-6 bg-aduh">
-      <h1 className="text-3xl font-bold text-center mb-6">Bouquet Bunga</h1>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="bg-pink-100 p-4 shadow-lg rounded-none transition duration-300 hover:scale-105 relative cursor-pointer"
-            onClick={() => router.push(product.link)}
-          >
-            <Image 
-              src={product.image} 
-              alt={product.name} 
-              width={300} 
-              height={300} 
-              className="w-full h-64 object-cover rounded-none"
-            />
-            <div className="flex items-center justify-start mt-2">
-              <FaStar className="text-yellow-500 mr-1" />
-              <span className="text-md font-semibold">{product.rating}</span>
+    <div className="relative mx-auto mt-32 p-6 bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 min-h-screen">
+      <h1 className="text-3xl font-extrabold text-center mb-10 text-pink-700 tracking-wide drop-shadow">
+        Bouquet Bunga
+      </h1>
+      {products.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-lg text-gray-500">Tidak ada produk bouquet ditemukan</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10">
+          {products.map((product) => (
+            <div
+              key={product.id_produk}
+              className="bg-white/80 p-4 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer group border-t-4 border-pink-200"
+              onClick={() => router.push(`/description/${product.id_produk}`)}
+            >
+              <div className="relative w-full aspect-square overflow-hidden rounded-xl shadow mb-3 bg-pink-50">
+                <Image
+                  src={`http://localhost:7000/upload/${product.gambar}`}
+                  alt={product.name}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  priority={products.indexOf(product) < 4}
+                />
+                <span className="absolute top-3 left-3 bg-yellow-200 text-yellow-700 rounded-full text-xs px-3 py-1 font-semibold shadow flex items-center">
+                  <FaTag className="inline mr-1" /> {product.kategori}
+                </span>
+              </div>
+              <div className="p-2">
+                <div className="flex justify-between items-center gap-2">
+                  <h2 className="text-lg font-bold text-gray-800 line-clamp-2 flex-1">{product.name}</h2>
+                  <div className="flex items-center bg-pink-100 px-2 py-1 rounded-full text-xs font-semibold shadow">
+                    <FaStar className="text-yellow-400 mr-1" />
+                    <span>{product.rating ? product.rating.toFixed(1) : "4.7"}</span>
+                  </div>
+                </div>
+                <div className="mt-2 text-xl font-extrabold text-pink-600">
+                  Rp{product.harga.toLocaleString("id-ID")}
+                </div>
+              </div>
             </div>
-            <h2 className="text-md font-semibold mt-1">{product.name}</h2>
-            <div className="text-lg font-bold text-gray-800">IDR {product.price.toLocaleString("id-ID")}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
