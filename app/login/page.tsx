@@ -29,12 +29,14 @@ const handleLogin = async (e) => {
     localStorage.setItem('user_id', data.user_id); // Add this line
     
     if (data.role === 'admin') {
-      router.push('./admin/dashboard');
-    } else {
-      router.push('/profile');
-    }
+  router.push('./admin/dashboard');
+} else if (data.role === 'karyawan') {
+  router.push('./karyawan/dashboard');
+} else {
+  router.push('./profile');
+}
   } else {
-    setError(data.message || 'Login failed');
+    setError(data.message || 'Login gagal');
   }
 };
 
@@ -64,7 +66,7 @@ const handleLogin = async (e) => {
           <FaLock className="mr-2 text-dusty text-sm" />
           <input
             type="password"
-            placeholder="Password"
+            placeholder="Kata sandi"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="bg-transparent outline-none text-sm w-full text-gray-700 placeholder:text-gray-400"
@@ -72,7 +74,7 @@ const handleLogin = async (e) => {
         </div>
         
         <div className="text-right text-s text-gray-600">
-        <span className="text-sm">Don't have an account? </span>
+        <span className="text-sm">Belum punya akun? </span>
         <button
           onClick={handleRegisterRedirect}
           className="text-right text-s font-bold text-tomat mb-6 cursor-pointer hover:underline"
@@ -85,7 +87,7 @@ const handleLogin = async (e) => {
           onClick={handleLogin}
           className="bg-dusty text-white font-semibold w-full py-2 rounded-full hover:bg-dusty/80 transition"
         >
-          Done →
+          Selesai →
         </button>
       </div>
     </div>

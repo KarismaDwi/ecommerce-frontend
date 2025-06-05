@@ -315,7 +315,7 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
               <label className="text-sm font-medium text-gray-700 flex items-center">
-                <FiKey className="mr-2" /> Password
+                <FiKey className="mr-2" /> Kata sandi
               </label>
               {edit ? (
                 <input

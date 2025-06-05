@@ -23,6 +23,7 @@ export default function ClientLayout({
   const pathname = usePathname();
 
   const isAdminPage = pathname.startsWith('/admin');
+  const isKaryawanPage = pathname.startsWith('/karyawan');
 
   // Halaman tanpa layout sama sekali (Navbar, Header, Footer)
   const noLayoutPages = ['/register', '/login'];
@@ -46,18 +47,19 @@ export default function ClientLayout({
   // Halaman yang hanya hide Header & Footer tapi TAMPIL Navbar
   const hideHeaderFooterPages = ['/checkout', '/payment'];
 
-  const shouldHideAll = noLayoutPages.includes(pathname) || isAdminPage;
+  // MODIFIKASI: halaman karyawan juga tidak tampil Navbar, Header, Footer
+  const shouldHideAll = noLayoutPages.includes(pathname) || isAdminPage || isKaryawanPage;
   const shouldHideNavbar = shouldHideAll;
   const shouldHideHeaderFooter = hideHeaderFooterPages.some((path) =>
     pathname.startsWith(path)
-  ) || isAdminPage;
+  ) || isAdminPage || isKaryawanPage;
 
-  // Cek apakah header harus disembunyikan
   const shouldHideHeader =
     noHeaderPages.some((path) => pathname.startsWith(path)) ||
     noLayoutPages.includes(pathname) ||
     shouldHideHeaderFooter ||
-    isAdminPage;
+    isAdminPage ||
+    isKaryawanPage;
 
   return (
     <html lang="en">

@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { FiUsers, FiShoppingCart, FiPackage, FiDollarSign, FiPieChart } from 'react-icons/fi';
+import { FiUsers, FiShoppingCart, FiPackage, FiDollarSign, FiPieChart, FiUser } from 'react-icons/fi';
 import Chart from 'chart.js/auto';
 
 export default function DashboardPage() {
+  const [karyawan, setKaryawan] = useState<any>(null);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [totalOrders, setTotalOrders] = useState<number>(0);
   const [totalProducts, setTotalProducts] = useState<number>(0);
@@ -20,9 +21,45 @@ export default function DashboardPage() {
   ];
 
   useEffect(() => {
+    // Fetch logged-in employee data
+    const fetchKaryawan = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) return;
+
+      try {
+        const res = await fetch('http://localhost:7000/api/karyawan', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        if (res.status === 401) {
+          localStorage.removeItem('accessToken');
+          window.location.href = '/login';
+          return;
+        }
+
+        const data = await res.json();
+        setKaryawan(data);
+      } catch (error) {
+        console.error('Error fetching karyawan:', error);
+      }
+    };
+
+    fetchKaryawan();
+
+    // Fetch user data, filter only users with role 'user'
     fetch('http://localhost:7000/api/user')
       .then(res => res.json())
-      .then(data => setTotalCustomers(Array.isArray(data) ? data.length : 0))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTotalCustomers(data.filter((u) => u.role === 'user').length);
+        } else if (Array.isArray(data.users)) {
+          setTotalCustomers(data.users.filter((u: any) => u.role === 'user').length);
+        } else {
+          setTotalCustomers(0);
+        }
+      })
       .catch(() => setTotalCustomers(0));
 
     fetch('http://localhost:7000/api/produk')
@@ -59,22 +96,32 @@ export default function DashboardPage() {
 
       setTotalOrders(orders.length + customOrders.length);
 
-      // Revenue
-      const completedOrders = orders.filter((order: any) =>
+      // Recent Orders (last 5)
+      setRecentOrders([...orders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5));
+
+      // Recent Custom Orders (last 5)
+      setRecentCustomOrders([...customOrders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5));
+
+      // Calculate revenue
+      const completedOrders = orders.filter((order: any) => 
         (order.status || '').toLowerCase() === 'completed'
       );
-      const revenueCheckout = completedOrders.reduce((sum: number, order: any) =>
+      const revenueCheckout = completedOrders.reduce((sum: number, order: any) => 
         sum + (parseInt(order.total_amount) || 0), 0);
 
-      const completedCustomOrders = customOrders.filter((order: any) =>
+      const completedCustomOrders = customOrders.filter((order: any) => 
         (order.status || '').toLowerCase() === 'completed'
       );
-      const revenueCustom = completedCustomOrders.reduce((sum: number, order: any) =>
+      const revenueCustom = completedCustomOrders.reduce((sum: number, order: any) => 
         sum + (parseInt(order.total_amount) || parseInt(order.price) || 0), 0);
 
       setTotalRevenue(revenueCheckout + revenueCustom);
 
-      // Sales by Category
+      // Calculate sales by category
       const categoryMap: Record<string, number> = {};
       CATEGORY_LIST.forEach(cat => { categoryMap[cat] = 0; });
 
@@ -95,19 +142,8 @@ export default function DashboardPage() {
         categories.push({ name: 'Lainnya', value: categoryMap['lainnya'] });
       }
       setSalesByCategory(categories);
-
-      // Recent Orders
-      const latest = [...orders]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
-      setRecentOrders(latest);
-
-      // Recent Custom Orders
-      const latestCustom = [...customOrders]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
-      setRecentCustomOrders(latestCustom);
-    }).catch(() => {
+    })
+    .catch(() => {
       setTotalOrders(0);
       setTotalRevenue(0);
       setSalesByCategory([]);
@@ -177,7 +213,7 @@ export default function DashboardPage() {
       shadow: 'shadow-blue-200'
     },
     {
-      title: 'Total Akun',
+      title: 'Total Pelanggan',
       value: totalCustomers,
       icon: <FiUsers className="text-green-600 text-3xl" />,
       color: 'bg-gradient-to-r from-green-100 to-green-50',
@@ -200,12 +236,36 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className='ml-64 min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 py-10 px-4'>
+    <div className='ml-72 min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 py-10 px-4'>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-extrabold mb-8 text-pink-700 tracking-wide flex items-center gap-3">
           <FiPieChart className="text-pink-400" />
           Dashboard
         </h1>
+
+        {/* Employee Profile Section */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8 flex flex-col md:flex-row md:items-center gap-4">
+          {karyawan ? (
+            <>
+              <div className="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center">
+                <FiUser className="text-pink-500 text-2xl" />
+              </div>
+              <div>
+                <div className="font-bold text-pink-700 text-lg">{karyawan.username}</div>
+                <div className="text-gray-600 text-sm">{karyawan.email}</div>
+                <div className="text-gray-500 text-sm">{karyawan.phone}</div>
+                <div className="text-gray-500 text-sm">{karyawan.address}</div>
+                <div className="inline-block mt-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-bold">
+                  {karyawan.role}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="italic text-gray-400">Memuat data karyawan...</div>
+          )}
+        </div>
+
+        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
           {summary.map((item) => (
             <div
@@ -222,6 +282,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          {/* Sales by Category Chart */}
           <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
             <h2 className="text-lg font-bold mb-4 w-full text-center text-blue-700">Penjualan per Kategori</h2>
             {salesByCategory.length === 0 ? (
@@ -255,6 +316,8 @@ export default function DashboardPage() {
               </>
             )}
           </div>
+
+          {/* Recent Orders Table */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-lg font-bold mb-4 text-blue-700">Pesanan Terbaru</h2>
             <div className="overflow-x-auto">
@@ -342,7 +405,6 @@ export default function DashboardPage() {
                   <th className="py-2">Order</th>
                   <th>Tanggal</th>
                   <th>Status</th>
-                  <th>Pelanggan</th>
                   <th>Jenis Bunga</th>
                   <th>Warna</th>
                   <th>Ukuran</th>
@@ -384,7 +446,6 @@ export default function DashboardPage() {
                         }
                       </span>
                     </td>
-                    <td>{order.username || '-'}</td>
                     <td>{order.flowerType || '-'}</td>
                     <td>{order.flowerColor || '-'}</td>
                     <td>{order.size || '-'}</td>
@@ -393,7 +454,7 @@ export default function DashboardPage() {
                 ))}
                 {recentCustomOrders.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center py-6 text-gray-400">
+                    <td colSpan={7} className="text-center py-6 text-gray-400">
                       Tidak ada custom order terbaru.
                     </td>
                   </tr>

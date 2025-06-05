@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { FiDollarSign, FiTruck, FiFileText, FiCheckCircle, FiAlertCircle, FiXCircle, FiLoader, FiDownload, FiSearch } from 'react-icons/fi';
+import { FiDollarSign, FiTruck, FiFileText, FiCheckCircle, FiAlertCircle, FiXCircle, FiLoader, FiDownload, FiFilter } from 'react-icons/fi';
 import html2pdf from 'html2pdf.js';
 import Papa from 'papaparse';
 
@@ -16,11 +16,6 @@ interface CheckoutEntry {
   payment_method: string;
 }
 
-function getCurrentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
 export default function LaporanKeuanganPage() {
   const [data, setData] = useState<CheckoutEntry[]>([]);
   const [filteredData, setFilteredData] = useState<CheckoutEntry[]>([]);
@@ -30,7 +25,6 @@ export default function LaporanKeuanganPage() {
   const [totalShipping, setTotalShipping] = useState(0);
   const [showExportTable, setShowExportTable] = useState(false);
   const [monthFilter, setMonthFilter] = useState<string>(getCurrentMonth());
-  const [search, setSearch] = useState('');
 
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +50,7 @@ export default function LaporanKeuanganPage() {
 
         const result = await response.json();
         const checkouts = Array.isArray(result.data) ? result.data : [];
+
         setData(checkouts);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Gagal mengambil data');
@@ -67,24 +62,20 @@ export default function LaporanKeuanganPage() {
     fetchData();
   }, []);
 
-  // Filter per bulan & search
+  // Filter data per bulan setiap monthFilter berubah atau data berubah
   useEffect(() => {
-    let filtered = data;
-    if (monthFilter) {
-      filtered = filtered.filter(item => item.createdAt && item.createdAt.startsWith(monthFilter));
-    }
-    if (search.trim()) {
-      filtered = filtered.filter(
-        (item) =>
-          item.order_code.toLowerCase().includes(search.toLowerCase()) ||
-          (item.payment_method || '').toLowerCase().includes(search.toLowerCase()) ||
-          (item.status || '').toLowerCase().includes(search.toLowerCase())
-      );
-    }
+    const filtered = data.filter(item =>
+      item.createdAt && item.createdAt.startsWith(monthFilter)
+    );
     setFilteredData(filtered);
     setTotalRevenue(filtered.reduce((sum, item) => sum + (item.total_amount || 0), 0));
     setTotalShipping(filtered.reduce((sum, item) => sum + (item.shipping_cost || 0), 0));
-  }, [data, monthFilter, search]);
+  }, [data, monthFilter]);
+
+  function getCurrentMonth() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
 
   function formatRupiah(x: number) {
     return 'Rp ' + (x || 0).toLocaleString('id-ID');
@@ -171,20 +162,23 @@ export default function LaporanKeuanganPage() {
     document.body.removeChild(link);
   };
 
-  // List unique bulan dari data
+  // Generate list of available months from the data for filter dropdown
   const availableMonths = Array.from(
     new Set(data.map(item => item.createdAt?.slice(0, 7)))
   ).filter(Boolean);
 
   return (
-    <div className="min-h-screen max-w-6xl ml-64 mx-auto py-10 px-4 bg-gradient-to-br from-pink-50 via-yellow-50 to-blue-50">
+    <div className="w-full">
+    <div className="min-h-screen w-full bg-gradient-to-br from-pink-50 via-yellow-50 to-blue-50">
+    <div className="max-w-6xl mx-auto ml-72 py-10 px-4">
       <h1 className="text-3xl font-extrabold mb-8 text-center text-pink-700 tracking-wide flex justify-center items-center gap-3">
         <FiFileText className="text-pink-400" /> Laporan Keuangan (Checkout)
       </h1>
 
-      {/* Filter & Search */}
+      {/* Filter Bulan */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
+          <FiFilter className="text-pink-600 text-lg" />
           <label htmlFor="monthFilter" className="font-semibold text-gray-700">Filter Bulan:</label>
           <select
             id="monthFilter"
@@ -199,15 +193,6 @@ export default function LaporanKeuanganPage() {
               <option key={month} value={month}>{month}</option>
             ))}
           </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <FiSearch className="text-pink-600" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Cari kode order, metode, status..."
-            className="border rounded-xl px-3 py-2 w-64"
-          />
         </div>
         {/* Tombol Export */}
         <div className="flex justify-end gap-2">
@@ -365,6 +350,8 @@ export default function LaporanKeuanganPage() {
           </table>
         </div>
       )}
+    </div>
+    </div>
     </div>
   );
 }

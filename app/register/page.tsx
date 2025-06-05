@@ -83,12 +83,12 @@ const Reservasi = () => {
 
       // ==== REDIRECT LANGSUNG KE DASHBOARD/HOME ====
       // Ganti '/' sesuai halaman tujuan user yang sudah login
-      alert("Registration successful! You are now logged in.");
+      alert("Pendaftaran berhasil.");
       router.push("/");
 
     } catch (error: any) {
       console.error("Registration error:", error);
-      setError(error.message || "Registration failed. Please try again.");
+      setError(error.message || "Pendaftaran gagal silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +97,7 @@ const Reservasi = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[url('../public/bekron.jpeg')] bg-cover p-5">
       <form onSubmit={handleSubmit} className="bg-nude bg-opacity-65 p-8 rounded-xl shadow-md w-full max-w-2xl">
-        <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Daftar Akun</h2>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
@@ -119,7 +119,7 @@ const Reservasi = () => {
           </div>
 
           <div className="w-1/2">
-            <label className="block mb-1 font-semibold">Phone</label>
+            <label className="block mb-1 font-semibold">Nomor Telpon</label>
             <input
               type="tel"
               name="phone"
@@ -145,7 +145,7 @@ const Reservasi = () => {
           </div>
 
           <div className="w-1/2">
-            <label className="block mb-1 font-semibold">Password</label>
+            <label className="block mb-1 font-semibold">Kata sandi</label>
             <input
               type="password"
               name="password"
@@ -159,7 +159,7 @@ const Reservasi = () => {
         </div>
 
         <div className="mb-4">
-          <label className="block mb-1 font-semibold">Address</label>
+          <label className="block mb-1 font-semibold">Alamat</label>
           <textarea
             name="address"
             value={formData.address}
@@ -177,11 +177,11 @@ const Reservasi = () => {
           disabled={isLoading}
           className={`w-full ${isLoading ? 'bg-gray-400' : 'bg-dusty hover:bg-aduh'} text-white font-bold py-2 px-4 rounded-md transition duration-300`}
         >
-          {isLoading ? 'Processing...' : 'Submit'}
+          {isLoading ? 'Processing...' : 'Daftar'}
         </button>
 
         <div className="text-center mt-4">
-          <span className="text-sm">Have an account? </span>
+          <span className="text-sm">Sudah punya akun? </span>
           <button
             type="button"
             onClick={() => router.push("/login")}
