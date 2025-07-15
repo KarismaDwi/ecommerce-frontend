@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 const menu = [
   { name: 'Dashboard', icon: '📊' },
   { name: 'Produk',    icon: '🌸' },
-  { name: 'Pembeli',   icon: '🧑‍🤝‍🧑' },
+  { name: 'Akun',   icon: '🧑‍🤝‍🧑' },
   { name: 'Pesanan',   icon: '📦' },
   { name: 'Laporan',   icon: '📑' },
   { name: 'Custom',    icon: '🎨' },
